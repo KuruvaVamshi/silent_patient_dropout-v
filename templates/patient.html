@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Patient Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+
+<style>
+/* ---------- PAGE ---------- */
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-family:Arial, sans-serif;
+  color:#111827;
+  overflow:hidden;
+
+  /* Smooth background with overlay */
+  background:
+    linear-gradient(
+      rgba(0,0,0,0.35),
+      rgba(0,0,0,0.35)
+    ),
+    url("/static/images/patient-login.jpg") center/cover no-repeat;
+
+  animation: bgSmooth 25s ease-in-out infinite alternate;
+}
+
+/* Smooth cinematic background motion */
+@keyframes bgSmooth{
+  0%{
+    background-position: center;
+    transform: scale(1);
+  }
+  100%{
+    background-position: center left;
+    transform: scale(1.08);
+  }
+}
+
+
+
+/* ---------- CARD ---------- */
+.box{
+  width:100%;
+  max-width:360px;
+  background:#ffffff;          /* WHITE FORM */
+  padding:30px;
+  border-radius:14px;
+  text-align:center;
+  box-shadow:0 15px 35px rgba(0,0,0,0.15);
+  border:1px solid #e5e7eb;
+}
+
+
+h2{
+  margin-top:0;
+  margin-bottom:20px;
+  color:#1e3a8a;
+}
+
+/* ---------- INPUT ---------- */
+input{
+  width:100%;
+  padding:10px;
+  margin:10px 0;
+  border-radius:8px;
+  border:1px solid #d1d5db;     /* VISIBLE BORDER */
+  background:#ffffff;
+  font-size:14px;
+  color:#111827;
+}
+
+input::placeholder{
+  color:#9ca3af;
+}
+
+input:focus{
+  outline:none;
+  border-color:#2563eb;
+  box-shadow:0 0 0 2px rgba(37,99,235,0.15);
+}
+
+
+/* ---------- ERROR ---------- */
+.error{
+  min-height:18px;
+  color:#fca5a5;
+  font-size:14px;
+}
+
+/* ---------- BUTTONS ---------- */
+button{
+  width:100%;
+  padding:12px;
+  margin-top:12px;
+  border-radius:10px;
+  font-size:14px;
+  font-weight:bold;
+  border:none;
+  cursor:pointer;
+  transition:transform 0.2s, box-shadow 0.2s;
+}
+
+.login-btn{
+  background:linear-gradient(135deg,#2563eb,#1e40af);
+  color:white;
+}
+
+.login-btn:hover{
+  box-shadow:0 12px 30px rgba(37,99,235,0.5);
+  transform:translateY(-2px);
+}
+
+.back-btn{
+  background:transparent;
+  border:1px solid rgba(99,102,241,0.4);
+  color:#1337c4;
+}
+
+.back-btn:hover{
+  background:rgba(99,102,241,0.15);
+  box-shadow:0 10px 25px rgba(99,102,241,0.35);
+}
+
+button:active{
+  transform:scale(0.97);
+}
+
+/* ---------- FOOTER ---------- */
+.note{
+  margin-top:18px;
+  font-size:13px;
+  color:#94a3b8;
+  font-style:italic;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+ <h2>
+  <i class="fas fa-user-injured" style="color:#60a5fa;margin-right:8px;"></i>
+  Patient Login
+</h2>
+
+
+  <input id="pid" placeholder="Patient ID">
+  <input id="pwd" type="password" placeholder="Password">
+
+  <div id="error" class="error"></div>
+
+  <button class="login-btn" onclick="login()">Login</button>
+  <button class="back-btn" onclick="goHome()">← Back to Home</button>
+
+  <div class="note">
+    Secure access to patient engagement status
+  </div>
+</div>
+
+<script>
+const patients = [
+  {id:"P02960", password:"1111"},
+  {id:"P02757", password:"2222"},
+  {id:"P00990", password:"3333"},
+  {id:"P01051", password:"4444"}
+];
+
+function login(){
+  const pid = document.getElementById("pid").value.trim();
+  const pwd = document.getElementById("pwd").value.trim();
+  const error = document.getElementById("error");
+
+  if(!pid || !pwd){
+    error.innerText = "⚠️ Please enter Patient ID and Password";
+    return;
+  }
+
+  let valid = false;
+
+  for(const p of patients){
+    if(p.id === pid && p.password === pwd){
+      valid = true;
+      break;
+    }
+  }
+
+  if(valid){
+    window.location.href = "/patient-status";
+  }else{
+    error.innerText = "❌ Invalid Patient ID or Password";
+  }
+}
+
+function goHome(){
+  window.location.href = "/";
+}
+</script>
+
+</body>
+</html>

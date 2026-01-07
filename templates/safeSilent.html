@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silent Dropout Patient Detector</title>
+
+<!-- 🔐 DOCTOR VALIDATION -->
+<script>
+  if (localStorage.getItem("doctorLoggedIn") !== "true") {
+    window.location.href = "doctor-login.html";
+  }
+</script>
+
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background-image:url("/static/images/bakground.jpeg");
+  background-size:cover;
+  background-attachment:fixed;
+}
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:rgba(246,247,249,0.4);
+}
+
+.header,.container{position:relative;z-index:1;}
+
+.header{
+  padding:20px 40px;
+  background:#fff;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid #e5e7eb;
+}
+
+.logo{display:flex;align-items:center;gap:12px;}
+.logo img{width:44px;}
+
+.logout-btn{
+  background:#ef4444;
+  color:#fff;
+  border:none;
+  padding:8px 16px;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+.container{max-width:1000px;margin:30px auto;}
+
+.section{
+  background:#fff;
+  padding:20px;
+  border-radius:6px;
+  border:1px solid #e5e7eb;
+  margin-bottom:25px;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:20px;
+}
+
+label{font-size:13px;color:#374151;}
+input,select{
+  width:100%;
+  padding:8px;
+  margin-top:5px;
+  border:1px solid #d1d5db;
+  border-radius:4px;
+}
+
+button{
+  margin-top:20px;
+  padding:12px 26px;
+  background:linear-gradient(135deg,#60a5fa,#2563eb);
+  color:white;
+  border:none;
+  border-radius:999px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+.score-row{display:flex;align-items:center;gap:15px;}
+.bar{
+  flex:1;
+  height:16px;
+  border-radius:10px;
+  background:linear-gradient(to right,#22c55e,#facc15,#ef4444);
+  position:relative;
+}
+.pointer{
+  position:absolute;
+  top:-4px;
+  width:6px;
+  height:24px;
+  background:#111;
+}
+.badge{padding:6px 14px;border-radius:20px;font-weight:bold;}
+.low{background:#dcfce7;color:#166534}
+.medium{background:#fef3c7;color:#92400e}
+.high{background:#fee2e2;color:#b91c1c}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <img src="https://graphicsfamily.com/wp-content/uploads/edd/2021/07/Editable-Health-Logo-Design-Template-1536x1536.png">
+    <marquee scrollamount="6">
+      <h1>Silent Dropout Patient Detector for Early Identification of Hidden Treatment Disengagement</h1>
+    </marquee>
+  </div>
+  <button class="logout-btn" onclick="logout()">Logout</button>
+</div>
+
+<div class="container">
+
+<!-- PATIENT DETAILS -->
+<div class="section">
+<h3>Patient Details</h3>
+
+<div class="form-grid">
+  <div>
+    <label>Age</label>
+    <input id="age" type="number" min="0" max="120" value="40">
+  </div>
+
+  <div>
+    <label>Gender</label>
+    <select id="gender">
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Expected Gap Between Visits (days)</label>
+    <input id="expected_gap" type="number" min="0" value="30">
+  </div>
+
+  <div>
+    <label>Days Late for Follow-Up</label>
+    <input id="late_follow" type="number" min="0" value="10">
+  </div>
+
+  <div>
+    <label>Medicine Refill Delay (days)</label>
+    <input id="refill_delay" type="number" min="0" value="10">
+  </div>
+
+  <div>
+    <label>Refill Source</label>
+    <select id="refill_source">
+      <option value="Hospital">Hospital</option>
+      <option value="Online">Online</option>
+      <option value="Local">Local</option>
+    </select>
+  </div>
+</div>
+</div>
+
+<!-- ENGAGEMENT DETAILS -->
+<div class="section">
+<h3>Patient Engagement Details</h3>
+
+<div class="form-grid">
+  <div>
+    <label>Days Since Last Contact</label>
+    <input id="since_last_applied" type="number" min="0" value="30">
+  </div>
+
+  <div>
+    <label>Missed Lab Tests</label>
+    <input id="missed_lab_tests" type="number" min="0" value="1">
+  </div>
+
+  <div>
+    <label>Care Team Calls Made</label>
+    <input id="team_calls" type="number" min="0" value="2">
+  </div>
+
+  <div>
+    <label>Patient Replied to Last Contact</label>
+    <select id="response">
+      <option value="Yes">Yes</option>
+      <option value="No">No</option>
+    </select>
+  </div>
+</div>
+
+<button onclick="predict()">Detect Risk</button>
+</div>
+
+<!-- SCORE -->
+<div class="section">
+<h3>Silent Dropout Score</h3>
+<div class="score-row">
+  <b>Score: <span id="score">-</span></b>
+  <div class="bar"><div id="pointer" class="pointer"></div></div>
+  <span id="risk" class="badge">-</span>
+</div>
+</div>
+<!-- RECOMMENDED ACTIONS -->
+<div class="section">
+  <h3>Recommended Actions</h3>
+
+  <div id="recoBox" class="badge" style="display:inline-block;margin-bottom:12px;">
+    -
+  </div>
+
+  <ul id="recoList"></ul>
+</div>
+
+
+</div>
+
+<script>
+function logout(){
+  localStorage.clear();
+  window.location.href="/";
+}
+
+// 🔄 Auto-fill from patient-status page
+window.onload = function(){
+  const saved = localStorage.getItem("patient_status");
+  if(!saved) return;
+
+  const data = JSON.parse(saved);
+
+  // ✅ If patient refilled medicine → refill delay = 0
+  if(data.refill === "yes"){
+    document.getElementById("refill_delay").value = 0;
+  }
+
+  // ✅ If patient responded → update response dropdown
+  if(data.response){
+    document.getElementById("response").value =
+      data.response === "yes" ? "Yes" : "No";
+  }
+
+  // ✅ If labs missed → increment missed labs
+  if(data.labs === "missed"){
+    document.getElementById("missed_lab_tests").value = 1;
+  }
+
+  // (optional) follow-up logic can be added later
+};
+
+function predict(){
+  const expectedGap = Number(expected_gap.value);
+  const lateFollow = Number(late_follow.value);
+  const refillDelay = Number(refill_delay.value);
+  const sinceLast = Number(since_last_applied.value);
+  const missedLabs = Number(missed_lab_tests.value);
+  const teamCalls = Number(team_calls.value);
+  const responseVal = response.value;
+
+  if([expectedGap,lateFollow,refillDelay,sinceLast,missedLabs,teamCalls].some(isNaN)){
+    alert("Please fill all fields");
+    return;
+  }
+
+  fetch("/predict",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+      p_Between: expectedGap,
+      Late_Follow: lateFollow,
+      Refill_Delay: refillDelay,
+      Since_Last_Applied: sinceLast,
+      Missed_Lab_Tests: missedLabs,
+      Team_Calls: teamCalls,
+      Response: responseVal
+    })
+  })
+  .then(r=>r.json())
+ .then(d=>{
+  score.innerText = d.silent_dropout_score;
+  risk.innerText = d.risk_level;
+  risk.className = "badge " + d.risk_level.toLowerCase();
+
+  pointer.style.left =
+    d.risk_level==="High"?"85%":
+    d.risk_level==="Medium"?"55%":"25%";
+
+  const recoBox = document.getElementById("recoBox");
+  const recoList = document.getElementById("recoList");
+
+  recoList.innerHTML = "";
+
+  if(d.risk_level === "High"){
+    recoBox.innerText = "⚠ High Risk – Immediate Action Required";
+    recoBox.className = "badge high";
+
+    recoList.innerHTML = `
+      <li>📞 Call patient immediately</li>
+      <li>📅 Schedule urgent follow-up</li>
+      <li>🧪 Ensure pending lab tests are completed</li>
+      <li>💊 Check medication adherence</li>
+    `;
+  }
+  else if(d.risk_level === "Medium"){
+    recoBox.innerText = "⚠ Medium Risk – Close Monitoring Needed";
+    recoBox.className = "badge medium";
+
+    recoList.innerHTML = `
+      <li>📨 Send reminder message</li>
+      <li>📆 Schedule follow-up visit</li>
+      <li>📊 Monitor engagement closely</li>
+    `;
+  }
+  else{
+    recoBox.innerText = "✅ Low Risk – Patient Engaged";
+    recoBox.className = "badge low";
+
+    recoList.innerHTML = `
+      <li>👍 Continue routine care</li>
+      <li>📅 Maintain regular follow-ups</li>
+      <li>📈 No immediate intervention needed</li>
+    `;
+  }
+})
+
+  .catch(()=>alert("Prediction error"));
+}
+</script>
+
+</body>
+</html>
